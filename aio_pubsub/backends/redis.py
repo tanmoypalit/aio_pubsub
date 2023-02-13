@@ -22,16 +22,21 @@ class RedisSubscriber(Subscriber):
 
 
 class RedisPubSub(PubSub):
-    def __init__(self, url: str) -> None:
+    def __init__(self, url: str, **kwargs) -> None:
         if aioredis_installed is False:
             raise RuntimeError("Please install `aioredis`")  # pragma: no cover
 
         self.url = url
         self.connection = None
+        self.timeout = kwargs.get("timeout", None)
+        self.ssl = kwargs.get("ssl", None)
+
 
     async def publish(self, channel: str, message: Message) -> None:
         if self.connection is None:
-            self.connection = await aioredis.create_redis(self.url)
+            self.connection = await aioredis.create_redis(
+                                        self.url, ssl=self.ssl,
+                                        timeout=self.timeout)
 
             
         channels = await self.connection.pubsub_channels(channel)
